@@ -1,0 +1,1 @@
+cd ../ceu-sdl; pwd;make all SRC=../final/game.ceu

@@ -1,0 +1,143 @@
+#include "sdl.ceu"
+
+input void SDL_REDRAW;
+input void SDL_QUIT;
+input int  SDL_DT;
+input _SDL_KeyboardEvent&& SDL_KEYDOWN;
+input _SDL_KeyboardEvent&& SDL_KEYUP;
+input _SDL_MouseButtonEvent&& SDL_MOUSEBUTTONDOWN;
+event (_SDL_Rect,int) collideTime;
+event int teste1;
+
+
+var _SDL_Window&? window;
+    finalize
+        window = &_SDL_CreateWindow("Game",
+                    _SDL_WINDOWPOS_UNDEFINED,
+                    _SDL_WINDOWPOS_UNDEFINED,
+                    640, 480, _SDL_WINDOW_SHOWN);
+    with
+        _SDL_DestroyWindow(&&window!);
+    end
+
+var _SDL_Renderer&? renderer;
+    finalize
+        renderer = &_SDL_CreateRenderer(&&window!, -1, 0);
+    with
+        _SDL_DestroyRenderer(&&renderer!);
+    end
+
+
+
+  
+
+class Player with
+    var _SDL_Renderer& ren;
+    var int x = (640/2 - 20/2) * 1000;
+    var int y = (480-50) * 1000;
+    var _SDL_Rect r = _SDL_Rect(x,y, 20,20);
+    event void playerHit;
+do
+    var int life = 3; 
+    var int vx = 0;
+    var int vy = 0;
+    par do
+        every dt in SDL_DT do
+            x = x + vx*dt;
+            y = y + vy*dt;
+        end
+    with
+        
+            par do
+                loop do
+                    var _SDL_KeyboardEvent&& key;
+                    key = await SDL_KEYDOWN until key:keysym.sym==_SDLK_LEFT;
+                    vx = vx - 100;
+                    key = await SDL_KEYUP   until key:keysym.sym==_SDLK_LEFT;
+                    vx = vx + 100;
+                end
+            with
+                loop do
+                    var _SDL_KeyboardEvent&& key;
+                    key = await SDL_KEYDOWN until key:keysym.sym==_SDLK_RIGHT;
+                    vx = 100 + vx;
+                    key = await SDL_KEYUP   until key:keysym.sym==_SDLK_RIGHT;
+                    vx = vx - 100 ;
+                end
+            with
+                loop do
+                    var _SDL_KeyboardEvent&& key;
+                    key = await SDL_KEYDOWN until key:keysym.sym==_SDLK_UP;
+                    vy = vy - 100;
+                    key = await SDL_KEYUP   until key:keysym.sym==_SDLK_UP;
+                    vy = vy + 100 ;
+                    _printf("fire %d %d\n",x,y);
+                end
+            with
+                loop do
+                    var _SDL_KeyboardEvent&& key;
+                    key = await SDL_KEYDOWN until key:keysym.sym==_SDLK_DOWN;
+                    vy = vy + 100;
+                    key = await SDL_KEYUP   until key:keysym.sym==_SDLK_DOWN;
+                    vy = vy - 100 ;
+                    _printf("baixo\n");
+                end
+            end
+    
+    with
+        every SDL_REDRAW do
+            _SDL_SetRenderDrawColor(&&this.ren,
+                                    0x00,0x00,0x00,0x00);
+            r.x = x / 1000;
+            r.y = y / 1000;
+            _SDL_RenderFillRect(&&this.ren, &&r);
+        end
+    with
+        loop do
+        await SDL_DT;
+        await this.playerHit;
+        this.life = this.life -1;
+        _printf("life %d\n",this.life);
+        if this.life <= 0 then
+            _printf("GAME OVER\n");
+            _exit(0);
+            escape true;
+        end
+        end
+
+
+    end
+end
+
+_srand(_time(null));
+
+
+
+par/or do
+    await SDL_QUIT;
+with
+    every SDL_REDRAW do
+        _SDL_SetRenderDrawColor(&&renderer!,
+                                0xFF,0xFF,0xFF,0x00);
+        _SDL_RenderFillRect(&&renderer!, null);
+    end
+with
+    // trail principal
+    
+
+    var Player p with
+        this.ren = &renderer!;
+    end;
+    every 10 s do
+        _printf("hi\n");
+    end
+   
+with
+    every SDL_REDRAW do
+        _SDL_RenderPresent(&&renderer!);
+    end
+end
+
+escape 0;
+
+
