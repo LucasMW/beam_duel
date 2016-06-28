@@ -56,6 +56,7 @@ do
             end
         end 
     with //keyboard controls
+    	if (joystick == false) then
         par do
             loop do
                 var _SDL_KeyboardEvent&& key;
@@ -78,7 +79,8 @@ do
                 key = await SDL_KEYDOWN until key:keysym.sym==_SDLK_UP;
                 _printf("fire %d %d\n",x,y);
             end
-        with //arduino controls
+        end
+        else  //arduino controls
             par do
                 var int orvx = vx;
                 var int rightvx = vx + 100;
@@ -166,11 +168,13 @@ with
     var Player p1 with
         this.ren =  &renderer!;
         this.x = (640/2 - 20/2) * 1000;
+        this.joystick = false;
     end;
     var Player p2 with
     	this.ren =  &renderer!;
     	this.x = (640/2 - 20/2) * 1000;
     	this.y = (480-50) * 1000;
+    	this.joystick = true;
     end;
     every SDL_DT do
     	var int x =0 ;
