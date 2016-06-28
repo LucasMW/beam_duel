@@ -33,6 +33,45 @@ var _SDL_Renderer&? renderer;
     end
 
 
+
+class Beam with
+    var _SDL_Renderer& ren;
+    var int vy = -10;
+    var int y = 0;
+    var int x = 0;
+    event void beam_collide;
+    var u8 red=0x00;
+    var u8 green=0x00;
+    var u8 blue=0x00;
+    var _SDL_Rect r = _SDL_Rect(x,y, 5,50);
+do  
+    par do
+        loop do
+            var int dt = await SDL_DT;
+            y = y + this.vy*dt;
+            if y < 0 then
+                _printf("Should Escape\n");
+                escape true;
+            end
+
+        end
+    with
+        every SDL_REDRAW do
+            //_printf("redraw %d %d\n",x,y);
+           _SDL_SetRenderDrawColor(&&this.ren,
+                                    this.red,this.green,this.blue,0x00);
+            this.r.y = y / 1000;
+            this.r.x = x / 1000;
+            _SDL_RenderFillRect(&&this.ren, &&this.r);
+        end
+    with
+        await this.beam_collide;
+        _printf("Collision BEAM\n");
+        escape true;
+    end
+
+end
+
 class Player with
     var _SDL_Renderer& ren;
     var int x = 0;
@@ -165,6 +204,7 @@ par/or do
     end
 with
     
+    pool Beam[] beams;
     var Player p1 with
         this.ren =  &renderer!;
         this.x = (640/2 - 20/2) * 1000;
@@ -177,8 +217,35 @@ with
     	this.joystick = true;
     end;
     every SDL_DT do
-    	var int x =0 ;
+    	var Beam&&?[] beamsHit;
+    	var Beam&&?[] beamsHit2;
+            loop b in beams do
+                    if _SDL_HasIntersection(&&b:r,&&p1.r) then
+                        beamsHit = []..beamsHit..[b];
+                        _printf("hit player \n");
+                        _printf("HERO HIT\n");
+                    end
+                    if _SDL_HasIntersection(&&b:r,&&p2.r) then
+                        beamsHit2 = []..beamsHit2..[b];
+                        _printf("hit player \n");
+                        _printf("HERO HIT\n");
+                    end
+            end
+            
+            loop i in $beamsHit do
+                if beamsHit[i]? then
+                    emit beamsHit[i]!:beam_collide;
+                    emit p1.playerHit;
+                end
+            end
+            loop i in $beamsHit do
+                if beamsHit[i]? then
+                    emit beamsHit[i]!:beam_collide;
+                    emit p2.playerHit;
+                end
+            end
     end
+
 with
     every SDL_REDRAW do
         _SDL_RenderPresent(&&renderer!);
