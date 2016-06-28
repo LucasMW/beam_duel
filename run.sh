@@ -1,1 +1,1 @@
-cd ../ceu-sdl; pwd;make all SRC=../final/game.ceu
+cd ../ceu-sdl; pwd;make all SRC=../final/multiplayer.ceu

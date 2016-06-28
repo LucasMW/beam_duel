@@ -9,6 +9,8 @@ input _SDL_MouseButtonEvent&& SDL_MOUSEBUTTONDOWN;
 event (_SDL_Rect,int) collideTime;
 event int teste1;
 
+#define WORLD_W 10000
+#define WORLD_H 10000
 
 var _SDL_Window&? window;
     finalize
@@ -71,7 +73,6 @@ do
                     vy = vy - 100;
                     key = await SDL_KEYUP   until key:keysym.sym==_SDLK_UP;
                     vy = vy + 100 ;
-                    _printf("fire %d %d\n",x,y);
                 end
             with
                 loop do
@@ -80,7 +81,6 @@ do
                     vy = vy + 100;
                     key = await SDL_KEYUP   until key:keysym.sym==_SDLK_DOWN;
                     vy = vy - 100 ;
-                    _printf("baixo\n");
                 end
             end
     

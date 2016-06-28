@@ -1,0 +1,187 @@
+#include "sdl.ceu"
+
+native do
+    ##include <unistd.h>
+    ##include <fcntl.h>
+end
+
+input void SDL_REDRAW;
+input void SDL_QUIT;
+input int  SDL_DT;
+input _SDL_KeyboardEvent&& SDL_KEYDOWN;
+input _SDL_KeyboardEvent&& SDL_KEYUP;
+input _SDL_MouseButtonEvent&& SDL_MOUSEBUTTONDOWN;
+event (_SDL_Rect,int) collideTime;
+
+input char SERIAL;
+
+var _SDL_Window&? window;
+    finalize
+        window = &_SDL_CreateWindow("Game",
+                    _SDL_WINDOWPOS_UNDEFINED,
+                    _SDL_WINDOWPOS_UNDEFINED,
+                    640, 480, _SDL_WINDOW_SHOWN);
+    with
+        _SDL_DestroyWindow(&&window!);
+    end
+
+var _SDL_Renderer&? renderer;
+    finalize
+        renderer = &_SDL_CreateRenderer(&&window!, -1, 0);
+    with
+        _SDL_DestroyRenderer(&&renderer!);
+    end
+
+
+class Player with
+    var _SDL_Renderer& ren;
+    var int x = 0;
+    var int y = 0;
+    var _SDL_Rect r = _SDL_Rect(x,y, 20,50);
+    var int joystick = false;
+    event void playerHit;
+do
+    var int life = 3; 
+    var int vx = 0;
+    var int vy = 0;
+    par do
+        every dt in SDL_DT do
+            x = x + vx*dt;
+            y = y + vy*dt;
+            if this.x > 640000 then
+                this.x = 0;
+            end
+            if this.x < 0 then
+                this.x = 640000;
+            end
+        end 
+    with //keyboard controls
+        par do
+            loop do
+                var _SDL_KeyboardEvent&& key;
+                key = await SDL_KEYDOWN until key:keysym.sym==_SDLK_LEFT;
+                vx = vx - 100;
+                key = await SDL_KEYUP   until key:keysym.sym==_SDLK_LEFT;
+                vx = vx + 100;
+            end
+        with
+            loop do
+                var _SDL_KeyboardEvent&& key;
+                key = await SDL_KEYDOWN until key:keysym.sym==_SDLK_RIGHT;
+                vx = 100 + vx;
+                key = await SDL_KEYUP   until key:keysym.sym==_SDLK_RIGHT;
+                vx = vx - 100 ;
+            end
+        with
+            loop do
+                var _SDL_KeyboardEvent&& key;
+                key = await SDL_KEYDOWN until key:keysym.sym==_SDLK_UP;
+                _printf("fire %d %d\n",x,y);
+            end
+        with //arduino controls
+            par do
+                var int orvx = vx;
+                var int rightvx = vx + 100;
+                var int leftvx = vx - 100;
+                var char lastserial = 0;
+                loop do
+                    var char c = await SERIAL;
+                    _printf("%c\n",c);
+                    if(c != lastserial) then
+                        if(c == 'W') then
+                            _printf("BEAM\n");
+                        end
+                        if (c == 'D') then
+                            vx = rightvx;
+                           // _printf("Right\n");
+                        end
+                        if(c == 'A') then
+                            vx = leftvx;
+                           // _printf("Left\n");
+                        end
+                        if(c == '0') then
+                            vx = orvx;
+                        end
+                        lastserial = c;
+                    end
+                end
+                _printf("FINISHED reacting\n");
+            with
+        
+                    var char c = 'x';
+                    var int h =0;
+                    var int it = 0;
+                    async (h,c) do
+                        native @nohold _fscanf;
+                        native @nohold _fcntl;
+                        native @nohold _read;
+                        var int fd = _open("/dev/cu.usbmodem1421",_O_RDONLY);
+                        var int flags = _fcntl(fd,_F_GETFL,0);
+                        if(_fcntl(fd,_F_SETFL,flags | _O_NONBLOCK))  then 
+                            _printf("ERROR NO CONTROLLER\n");
+                        else
+                            _printf("Joystick ON\n");
+                            loop do
+                                var int ret = _read(fd,&&c,1);
+                                if ret >= 0 then
+                                    emit SERIAL => c;
+                                end
+                            end
+                        end
+                    end
+               
+                _printf("FINISHED reading\n");
+            end
+        end
+    with
+        every SDL_REDRAW do
+            _SDL_SetRenderDrawColor(&&this.ren,
+                                    0x00,0x00,0x00,0x00);
+            r.x = x / 1000;
+            r.y = y / 1000;
+            _SDL_RenderFillRect(&&this.ren, &&r);
+        end
+    with
+        loop do
+            await SDL_DT;
+            await this.playerHit;
+            this.life = this.life -1;
+            _printf("life %d\n",this.life);
+            if this.life <= 0 then
+                _printf("GAME OVER\n");
+                _exit(0);
+                escape true;
+            end
+        end
+    end
+end
+par/or do
+    every SDL_REDRAW do
+        _SDL_SetRenderDrawColor(&&renderer!,
+                                0xFF,0xFF,0xFF,0x00);
+        _SDL_RenderFillRect(&&renderer!, null);
+    end
+with
+    
+    var Player p1 with
+        this.ren =  &renderer!;
+        this.x = (640/2 - 20/2) * 1000;
+    end;
+    var Player p2 with
+    	this.ren =  &renderer!;
+    	this.x = (640/2 - 20/2) * 1000;
+    	this.y = (480-50) * 1000;
+    end;
+    every SDL_DT do
+    	var int x =0 ;
+    end
+with
+    every SDL_REDRAW do
+        _SDL_RenderPresent(&&renderer!);
+    end
+with
+    await SDL_QUIT;
+end
+
+escape 0;
+
