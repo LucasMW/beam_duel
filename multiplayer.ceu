@@ -74,6 +74,7 @@ end
 
 class Player with
     var _SDL_Renderer& ren;
+    pool Beam[]& beams;
     var int x = 0;
     var int y = 0;
     var _SDL_Rect r = _SDL_Rect(x,y, 20,50);
@@ -117,6 +118,13 @@ do
                 var _SDL_KeyboardEvent&& key;
                 key = await SDL_KEYDOWN until key:keysym.sym==_SDLK_UP;
                 _printf("fire %d %d\n",x,y);
+                spawn Beam in this.beams  with
+                    this.vy = 500;
+                    this.y = y + 50000;
+                    this.x = x ;
+                    this.ren = &ren;
+                    this.red = 0xCC;
+                end;
             end
         end
         else  //arduino controls
@@ -131,6 +139,13 @@ do
                     if(c != lastserial) then
                         if(c == 'W') then
                             _printf("BEAM\n");
+                            spawn Beam in this.beams with
+                                this.vy = -500;
+                                this.y = y -50000;
+                                this.x = x + 7500;
+                                this.ren = &ren;
+                                this.green= 0xBB;
+                            end;
                         end
                         if (c == 'D') then
                             vx = rightvx;
@@ -190,7 +205,7 @@ do
             _printf("life %d\n",this.life);
             if this.life <= 0 then
                 _printf("GAME OVER\n");
-                _exit(0);
+                //_exit(0);
                 escape true;
             end
         end
@@ -209,12 +224,14 @@ with
         this.ren =  &renderer!;
         this.x = (640/2 - 20/2) * 1000;
         this.joystick = false;
+        this.beams = &beams;
     end;
     var Player p2 with
     	this.ren =  &renderer!;
     	this.x = (640/2 - 20/2) * 1000;
     	this.y = (480-50) * 1000;
     	this.joystick = true;
+    	this.beams = &beams;
     end;
     every SDL_DT do
     	var Beam&&?[] beamsHit;
