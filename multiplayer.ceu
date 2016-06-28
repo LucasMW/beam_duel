@@ -255,9 +255,9 @@ with
                     emit p1.playerHit;
                 end
             end
-            loop i in $beamsHit do
-                if beamsHit[i]? then
-                    emit beamsHit[i]!:beam_collide;
+            loop i in $beamsHit2 do
+                if beamsHit2[i]? then
+                    emit beamsHit2[i]!:beam_collide;
                     emit p2.playerHit;
                 end
             end
