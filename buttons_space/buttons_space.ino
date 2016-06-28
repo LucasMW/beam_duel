@@ -31,14 +31,14 @@ void loop () {
     if(btup == HIGH){
       int btup_now = millis();
       if(btup_now - MIN_INTERVAL >= BT_UP_LASTPRESS){
-        if(BT_UP_LAST_STATUS == LOW) Serial.println("1");
+        if(BT_UP_LAST_STATUS == LOW) Serial.print("1");
         BT_UP_LAST_STATUS = HIGH;
-        Serial.println("W");
+        Serial.print("W");
         BT_UP_LASTPRESS = millis();
       }
     }
   else{
-      if(BT_UP_LAST_STATUS == HIGH) Serial.println("0");
+      if(BT_UP_LAST_STATUS == HIGH) Serial.print("0");
       BT_UP_LAST_STATUS = LOW;
     }
     
@@ -46,15 +46,15 @@ void loop () {
     if(btleft == HIGH){
       int btleft_now = millis();
       if(btleft_now - MIN_INTERVAL >= BT_LEFT_LASTPRESS){
-        if(BT_LEFT_LAST_STATUS == LOW) Serial.println("1");
+        if(BT_LEFT_LAST_STATUS == LOW) Serial.print("1");
         BT_LEFT_LAST_STATUS = HIGH;
-        Serial.println("A");
+        Serial.print("A");
         BT_LEFT_LASTPRESS = millis();
         //Keyboard.press(KEY_LEFT_ARROW);
       }
     }
     else{
-      if(BT_LEFT_LAST_STATUS == HIGH) Serial.println("0");
+      if(BT_LEFT_LAST_STATUS == HIGH) Serial.print("0");
       BT_LEFT_LAST_STATUS = LOW;
     }
     
@@ -62,15 +62,15 @@ void loop () {
     if(btright == HIGH){
       int btright_now = millis();
       if(btright_now - MIN_INTERVAL >= BT_RIGHT_LASTPRESS){
-        if(BT_RIGHT_LAST_STATUS == LOW) Serial.println("1");
+        if(BT_RIGHT_LAST_STATUS == LOW) Serial.print("1");
         BT_RIGHT_LAST_STATUS = HIGH;
-        Serial.println("D");
+        Serial.print("D");
         BT_RIGHT_LASTPRESS = millis();
         //Keyboard.press(KEY_RIGHT_ARROW);
       }
     }
     else{
-      if(BT_RIGHT_LAST_STATUS == HIGH) Serial.println("0");
+      if(BT_RIGHT_LAST_STATUS == HIGH) Serial.print("0");
       BT_RIGHT_LAST_STATUS = LOW;
     }
  }

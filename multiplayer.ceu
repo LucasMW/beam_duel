@@ -137,7 +137,7 @@ do
                 var char lastserial = 0;
                 loop do
                     var char c = await SERIAL;
-                    _printf("%c\n",c);
+                    //_printf("%c\n",c);
                     if(c != lastserial) then
                         if(c == 'W') then
                             _printf("BEAM\n");
