@@ -13,6 +13,7 @@ input _SDL_KeyboardEvent&& SDL_KEYUP;
 input _SDL_MouseButtonEvent&& SDL_MOUSEBUTTONDOWN;
 event (_SDL_Rect,int) collideTime;
 
+input int  WIN;
 input char SERIAL;
 
 var _SDL_Window&? window;
@@ -80,6 +81,7 @@ class Player with
     var _SDL_Rect r = _SDL_Rect(x,y, 20,50);
     var int joystick = false;
     event void playerHit;
+    var int pnumber;
 do
     var int life = 3; 
     var int vx = 0;
@@ -206,6 +208,10 @@ do
             if this.life <= 0 then
                 _printf("GAME OVER\n");
                 //_exit(0);
+                var int n = (pnumber % 2) +1;
+                async (n) do
+                	emit WIN => n;
+                end
                 escape true;
             end
         end
@@ -225,6 +231,7 @@ with
         this.x = (640/2 - 20/2) * 1000;
         this.joystick = false;
         this.beams = &beams;
+        this.pnumber = 1;
     end;
     var Player p2 with
     	this.ren =  &renderer!;
@@ -232,6 +239,7 @@ with
     	this.y = (480-50) * 1000;
     	this.joystick = true;
     	this.beams = &beams;
+    	this.pnumber = 2;
     end;
     every SDL_DT do
     	var Beam&&?[] beamsHit;
@@ -267,6 +275,10 @@ with
     every SDL_REDRAW do
         _SDL_RenderPresent(&&renderer!);
     end
+with
+	var int winner = await WIN;
+	_printf("player %d won", winner );
+	escape true;
 with
     await SDL_QUIT;
 end
